@@ -1,0 +1,31 @@
+*{
+  margin: 0;
+  padding: 0;
+}
+
+.app{
+  height: 100vh;
+  background-color: #7FFFD4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.container{
+  height: 600px;
+  width: 400px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.5);
+  
+}
+
+.heading{
+  text-align: center;
+  font-family: Times, Times New Roman, serif;
+  margin-top: 1rem;
+  font-weight: bold;
+  text-decoration: underline dotted black;
+  padding-bottom: 25px;
+
+}
