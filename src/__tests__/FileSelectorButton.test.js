@@ -11,7 +11,6 @@ describe('FileSelectorButton', () => {
     })
 
     test('renders file uploader`', () => {
-        // console.log(wrapper.debug())
         expect(wrapper.find('input').props()['type']).toBe('file')
     })
 
