@@ -1,9 +1,9 @@
 import React from 'react'
 import ImageUploader from '../components/ImageUploader'
 
-import { act } from 'react-test-renderer'
 import { shallow, mount } from 'enzyme'
-// import { waitFor } from '@testing-library/react'
+import axios from 'axios'
+import { waitFor, cleanup } from '@testing-library/react'
 
 describe('ImageUploader', () => {
 
@@ -16,17 +16,99 @@ describe('ImageUploader', () => {
     test('renders an upload photo display window with default image', () => {
         expect(wrapper.find('img').props()['src']).toBe('default-img.jpg')
     })
+
+    test('allows the user to input an image which changes the displayed image', (done) => {
+        wrapper = mount(<ImageUploader />)
+        jest.spyOn(global, 'FileReader').mockImplementation(function () {
+            this.readyState = 2
+            this.result = "uploadedFile.png" // is reader.result
+            this.readAsDataURL = jest.fn()
+        })
+
+        console.log(wrapper.debug())
+        
+        wrapper.find("input").simulate("change", {
+            target: {
+                files : ["File"] //IS e.target.files[0]
+            }
+        })
+        let reader = FileReader.mock.instances[0]
+        reader.onload()
     
+        setImmediate(() => {
+            wrapper.update()
+            console.log(wrapper.debug())
 
-    // test('renders file uploader`', () => {
-    //     expect(wrapper.find('input').props()['type']).toBe('file')
-    // })
+            expect(wrapper.find('img').props()['src']).toBe('uploadedFile.png')
+            expect(reader.readAsDataURL).toHaveBeenCalledWith("File")
+            done()
+        })
+    })
 
-    // test('only accepts images in the uploader', () => {
-    //     expect(wrapper.find('input').props()['accept']).toBe('image/*')
-    // })
+    test('renders a FileSelectorButton element', () => {
+        expect(wrapper.find('FileSelectorButton').length).toEqual(1)
+    })
 
-    test.only('allows the user to input an image which changes the displayed image', () => {
+    test('renders an upload button', () => {
+        expect(wrapper.find('button').length).toEqual(1)
+    })
+
+    test('when upload button is clicked without the user changing the image from the default, the axios post function is not called', async () => {
+        axios.post = jest.fn()
+
+        wrapper = shallow(<ImageUploader />)
+        await waitFor(() => wrapper.find('button').simulate('click')) 
+
+        expect(axios.post).not.toHaveBeenCalled()
+    })
+
+    test('when upload button is clicked without the user changing the image from the default, information is displayed to the user', async () => {
+        await waitFor(() => wrapper.find('button').simulate('click')) 
+
+        expect(wrapper.find('#information').text()).toContain("Please select your own image")
+    })
+
+    test('when user tries to upload the default, but then corrects it to their own image, the information is then removed from display', (done) => {
+        wrapper = mount(<ImageUploader />)
+
+        console.log(wrapper.debug())
+        wrapper.find('button').simulate('click')
+
+        expect(wrapper.find('#information').text()).toContain("Please select your own image")
+
+        
+        jest.spyOn(global, 'FileReader').mockImplementation(function () {
+            this.readyState = 2
+            this.result = "uploadedFile.png" // is reader.result
+            this.readAsDataURL = jest.fn()
+        })
+        
+        wrapper.find("input").simulate("change", {
+            target: {
+                files : ["File"] //IS e.target.files[0]
+            }
+        })
+
+        let reader = FileReader.mock.instances[0]
+        reader.onload()
+
+
+        setImmediate(() => {
+            wrapper.update()
+            console.log(wrapper.debug())
+
+            expect(wrapper.find('#information').length).toEqual(0)
+            done()
+        })
+
+    })
+
+    test('if upload button has not been clicked, the information section is not visible', async () => {
+        expect(wrapper.find('#information').length).toEqual(0)
+    })
+
+    test('when upload button is clicked when the user has changed the image, the axios post function is called', async () => {
+        axios.post = jest.fn()
         wrapper = mount(<ImageUploader />)
         jest.spyOn(global, 'FileReader').mockImplementation(function () {
             this.readyState = 2
@@ -41,18 +123,10 @@ describe('ImageUploader', () => {
         })
         let reader = FileReader.mock.instances[0]
         reader.onload()
-       
-        // the expect below needs to be fixed but is producing an warning which interferes with the test
-        // needs resolving
-        // expect(wrapper.find('img').props()['src']).toBe('uploadedFile.png')
-        expect(reader.readAsDataURL).toHaveBeenCalledWith("File")
+        await waitFor(() => wrapper.find('button').simulate('click')) 
+
+        expect(axios.post).toHaveBeenCalled()
     })
 
-    // test('allows the user to input an image through a styled button which presses the image-input button', () => {
-    //     expect(wrapper.find('label').props()['htmlFor']).toBe('image-input')
-    // })
-
-    test('renders a FileSelectorButton element', () => {
-        expect(wrapper.find('FileSelectorButton').length).toEqual(1)
-    })
+    
 })
