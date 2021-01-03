@@ -5,6 +5,7 @@ import { shallow, mount } from 'enzyme'
 import axios from 'axios'
 import { waitFor} from '@testing-library/react'
 import sinon from 'sinon'
+import imageUtils from '../utils/imageUtils'
 
 describe('ImageUploader', () => {
 
@@ -101,40 +102,18 @@ describe('ImageUploader', () => {
         expect(wrapper.find('#information').length).toEqual(0)
     })
 
-    test('when upload button is clicked when the user has changed the image, the axios post function is called', async () => {
-        axios.post = jest.fn()
-        wrapper = mount(<ImageUploader />)
-        jest.spyOn(global, 'FileReader').mockImplementation(function () {
-            this.readyState = 2
-            this.result = "uploadedFile.png" // is reader.result
-            this.readAsDataURL = jest.fn()
-        })
-        
-        wrapper.find("input").simulate("change", {
-            target: {
-                files : ["File"] //IS e.target.files[0]
-            }
-        })
-        let reader = FileReader.mock.instances[0]
-        reader.onload()
-        await waitFor(() => wrapper.find('button').simulate('click')) 
-
-        
-        expect(axios.post).toHaveBeenCalled()
-    })
-
     
-    test('when upload button is clicked without the user changing the image from the default, the axios post function is not called', async () => {
-        axios.post = jest.fn()
+    test('when upload button is clicked without the user changing the image from the default, the sendImageToServer function is not called', async () => {
+        imageUtils.sendImageToServer = jest.fn()
 
         wrapper = shallow(<ImageUploader />)
         await waitFor(() => wrapper.find('button').simulate('click')) 
 
-        expect(axios.post).not.toHaveBeenCalled()
+        expect(imageUtils.sendImageToServer).not.toHaveBeenCalled()
     })
 
     test('if there is an error uploading the photo, returns an error message to the user', (done) => {
-        sinon.stub(axios, 'post').throws(new Error("some fake error"))
+        sinon.stub(imageUtils, 'sendImageToServer').throws(new Error("some fake error"))
         wrapper = mount(<ImageUploader />)
         jest.spyOn(global, 'FileReader').mockImplementation(function () {
             this.readyState = 2
@@ -160,7 +139,7 @@ describe('ImageUploader', () => {
     })
 
     test("if there is an error uploading the photo, but then the user tries again and succeeds, the info message disappears", (done) => {
-        sinon.stub(axios, 'post').throws(new Error("some fake error"))
+        sinon.stub(imageUtils, 'sendImageToServer').throws(new Error("some fake error"))
         wrapper = mount(<ImageUploader />)
         jest.spyOn(global, 'FileReader').mockImplementation(function () {
             this.readyState = 2
@@ -177,7 +156,7 @@ describe('ImageUploader', () => {
         reader.onload()
         wrapper.find('button').simulate('click')
         sinon.restore()
-        sinon.stub(axios, 'post').returns("successful request")
+        sinon.stub(imageUtils, 'sendImageToServer').returns("successful request")
         wrapper.find('button').simulate('click')
 
         setImmediate(() => {
@@ -188,10 +167,10 @@ describe('ImageUploader', () => {
         })
     })
 
-    test('when upload button is clicked when the user has changed the image, the axios post function is called with formparams', async () => {
+    test('when upload button is clicked when the user has changed the image, the sendImageToServer function is called with formparams', async () => {
+        imageUtils.sendImageToServer = jest.fn()
         const formData= new FormData()
         formData.append("testUrl", "testFile")
-        axios.post = jest.fn()
         wrapper = mount(<ImageUploader />)
         jest.spyOn(global, 'FileReader').mockImplementation(function () {
             this.readyState = 2
@@ -208,11 +187,11 @@ describe('ImageUploader', () => {
         reader.onload()
         await waitFor(() => wrapper.find('button').simulate('click')) 
 
-        expect(axios.post).toBeCalledWith(formData)
+        expect(imageUtils.sendImageToServer).toBeCalledWith("testFile")
     })
 
     test('when api sends successful response with fake image, the user is displayed info on if the image is fake and the percentage of fake in the image', (done) => {
-        sinon.stub(axios, 'post').returns({isFake: true, percentageFake: "testPercentage"})
+        sinon.stub(imageUtils, 'sendImageToServer').returns({isFake: true, percentageFake: "testPercentage"})
         wrapper = mount(<ImageUploader />)
         jest.spyOn(global, 'FileReader').mockImplementation(function () {
             this.readyState = 2
