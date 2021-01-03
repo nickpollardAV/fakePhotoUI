@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import defaultImage from '../images/default-img.jpg'
 import '../css/ImageUploader.css'
 import FileSelectorButton from './FileSelectorButton'
@@ -8,48 +8,51 @@ import axios from 'axios'
 function ImageUploader() {
     const [image, setImage] = useState(defaultImage)
     const [displayInfo, setDisplayInfo] = useState(false)
+    const [informationText, setInformationText] = useState("")
+    const [file, setFile] = useState("")
 
     const handleChange = (e) => {
-        const reader = new FileReader();
+        const reader = new FileReader()
         reader.onload = () => {
             if(reader.readyState === 2) {
                 setImage(reader.result)
                 setDisplayInfo(false)
-                console.log(displayInfo)
-                console.log(reader.result)
             }
         }
         reader.readAsDataURL(e.target.files[0])
+        setFile(e.target.files[0])
     }
 
     const handleClick = async() => {
-        
+        let informationText
         if (image !== defaultImage) {
             try {
-                await axios.post('url', 'date')
-                console.log("get successss")
+                const formData= new FormData()
+                formData.append(process.env.REACT_APP_BACKEND_URL, file)
+                const result = await axios.post(formData)
+                const resultText = `The image is ${result.isFake === true ? "fake": "real"} and scored ${result.percentageFake}% on the fakeometer`
+                informationText = resultText
             } catch(e) {
-                // need to add test for error section
-                // has been added to prevent browswer warnings
-                console.log("error")
+                informationText = "Failed to upload your image. This is our bad."
             }
         } else {
-            setDisplayInfo(true)
-            console.log(displayInfo)
+            informationText = "Please select your own image"
         }
+        setInformationText(informationText)
+        setDisplayInfo(true)
         
     }
 
     return (
         <div className="container">
-            <img className="uploaded-img" id="uploaded-img" src={image} alt="user-image" />
+            <img className="uploaded-img" id="uploaded-img" src={image} alt=""/>
 
             <FileSelectorButton handleChange={handleChange}/>
 
             <button onClick={handleClick}>Upload</button>
 
             {displayInfo === false ? null: 
-            <h1 id="information">Please select your own image</h1>}
+            <h1 id="information">{informationText}</h1>}
             
         </div>
         
