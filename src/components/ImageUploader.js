@@ -2,12 +2,12 @@ import React, { useState } from 'react'
 import defaultImage from '../images/default-img.jpg'
 import '../css/ImageUploader.css'
 import FileSelectorButton from './FileSelectorButton'
-import axios from 'axios'
+import imageUtils from '../utils/imageUtils'
 
 
 function ImageUploader() {
     const [image, setImage] = useState(defaultImage)
-    const [displayInfo, setDisplayInfo] = useState(false)
+    const [displayInfo, setDisplayInformationText] = useState(false)
     const [informationText, setInformationText] = useState("")
     const [file, setFile] = useState("")
 
@@ -16,7 +16,7 @@ function ImageUploader() {
         reader.onload = () => {
             if(reader.readyState === 2) {
                 setImage(reader.result)
-                setDisplayInfo(false)
+                setDisplayInformationText(false)
             }
         }
         reader.readAsDataURL(e.target.files[0])
@@ -27,10 +27,8 @@ function ImageUploader() {
         let informationText
         if (image !== defaultImage) {
             try {
-                const formData= new FormData()
-                formData.append(process.env.REACT_APP_BACKEND_URL, file)
-                const result = await axios.post(formData)
-                const resultText = `The image is ${result.isFake === true ? "fake": "real"} and scored ${result.percentageFake}% on the fakeometer`
+                const response = await imageUtils.sendImageToServer(file) 
+                const resultText = `The image is ${response.isFake === true ? "fake": "real"} and scored ${response.percentageFake}% on the fakeometer`
                 informationText = resultText
             } catch(e) {
                 informationText = "Failed to upload your image. This is our bad."
@@ -39,7 +37,7 @@ function ImageUploader() {
             informationText = "Please select your own image"
         }
         setInformationText(informationText)
-        setDisplayInfo(true)
+        setDisplayInformationText(true)
         
     }
 
