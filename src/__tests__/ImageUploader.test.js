@@ -3,12 +3,16 @@ import ImageUploader from '../components/ImageUploader'
 
 import { shallow, mount } from 'enzyme'
 import axios from 'axios'
-import { waitFor, cleanup } from '@testing-library/react'
+import { waitFor} from '@testing-library/react'
+import sinon from 'sinon'
 
 describe('ImageUploader', () => {
 
     let wrapper
     beforeEach(() => {
+        jest.clearAllMocks()
+        jest.resetModules()
+        process.env.REACT_APP_BACKEND_URL = "testUrl"
         wrapper = shallow(<ImageUploader />)
     })
 
@@ -53,14 +57,6 @@ describe('ImageUploader', () => {
         expect(wrapper.find('button').length).toEqual(1)
     })
 
-    test('when upload button is clicked without the user changing the image from the default, the axios post function is not called', async () => {
-        axios.post = jest.fn()
-
-        wrapper = shallow(<ImageUploader />)
-        await waitFor(() => wrapper.find('button').simulate('click')) 
-
-        expect(axios.post).not.toHaveBeenCalled()
-    })
 
     test('when upload button is clicked without the user changing the image from the default, information is displayed to the user', async () => {
         await waitFor(() => wrapper.find('button').simulate('click')) 
@@ -71,7 +67,6 @@ describe('ImageUploader', () => {
     test('when user tries to upload the default, but then corrects it to their own image, the information is then removed from display', (done) => {
         wrapper = mount(<ImageUploader />)
 
-        console.log(wrapper.debug())
         wrapper.find('button').simulate('click')
 
         expect(wrapper.find('#information').text()).toContain("Please select your own image")
@@ -95,7 +90,6 @@ describe('ImageUploader', () => {
 
         setImmediate(() => {
             wrapper.update()
-            console.log(wrapper.debug())
 
             expect(wrapper.find('#information').length).toEqual(0)
             done()
@@ -125,8 +119,127 @@ describe('ImageUploader', () => {
         reader.onload()
         await waitFor(() => wrapper.find('button').simulate('click')) 
 
+        
         expect(axios.post).toHaveBeenCalled()
     })
 
+    
+    test('when upload button is clicked without the user changing the image from the default, the axios post function is not called', async () => {
+        axios.post = jest.fn()
+
+        wrapper = shallow(<ImageUploader />)
+        await waitFor(() => wrapper.find('button').simulate('click')) 
+
+        expect(axios.post).not.toHaveBeenCalled()
+    })
+
+    test('if there is an error uploading the photo, returns an error message to the user', (done) => {
+        sinon.stub(axios, 'post').throws(new Error("some fake error"))
+        wrapper = mount(<ImageUploader />)
+        jest.spyOn(global, 'FileReader').mockImplementation(function () {
+            this.readyState = 2
+            this.result = "uploadedFile.png" // is reader.result
+            this.readAsDataURL = jest.fn()
+        })
+        
+        wrapper.find("input").simulate("change", {
+            target: {
+                files : ["File"] //IS e.target.files[0]
+            }
+        })
+        let reader = FileReader.mock.instances[0]
+        reader.onload()
+        wrapper.find('button').simulate('click')
+
+        setImmediate(() => {
+            wrapper.update()
+
+            expect(wrapper.find('#information').text()).toContain("Failed to upload your image. This is our bad.")
+            done()
+        })
+    })
+
+    test("if there is an error uploading the photo, but then the user tries again and succeeds, the info message disappears", (done) => {
+        sinon.stub(axios, 'post').throws(new Error("some fake error"))
+        wrapper = mount(<ImageUploader />)
+        jest.spyOn(global, 'FileReader').mockImplementation(function () {
+            this.readyState = 2
+            this.result = "uploadedFile.png" // is reader.result
+            this.readAsDataURL = jest.fn()
+        })
+        
+        wrapper.find("input").simulate("change", {
+            target: {
+                files : ["File"] //IS e.target.files[0]
+            }
+        })
+        let reader = FileReader.mock.instances[0]
+        reader.onload()
+        wrapper.find('button').simulate('click')
+        sinon.restore()
+        sinon.stub(axios, 'post').returns("successful request")
+        wrapper.find('button').simulate('click')
+
+        setImmediate(() => {
+            wrapper.update()
+
+            expect(wrapper.find('#information').text()).not.toContain("Failed to upload your image. This is our bad.")
+            done()
+        })
+    })
+
+    test('when upload button is clicked when the user has changed the image, the axios post function is called with formparams', async () => {
+        const formData= new FormData()
+        formData.append("testUrl", "testFile")
+        axios.post = jest.fn()
+        wrapper = mount(<ImageUploader />)
+        jest.spyOn(global, 'FileReader').mockImplementation(function () {
+            this.readyState = 2
+            this.result = "uploadedFile.png" // is reader.result
+            this.readAsDataURL = jest.fn()
+        })
+        
+        wrapper.find("input").simulate("change", {
+            target: {
+                files : ["testFile"] //IS e.target.files[0]
+            }
+        })
+        let reader = FileReader.mock.instances[0]
+        reader.onload()
+        await waitFor(() => wrapper.find('button').simulate('click')) 
+
+        expect(axios.post).toBeCalledWith(formData)
+    })
+
+    test('when api sends successful response with fake image, the user is displayed info on if the image is fake and the percentage of fake in the image', (done) => {
+        sinon.stub(axios, 'post').returns({isFake: true, percentageFake: "testPercentage"})
+        wrapper = mount(<ImageUploader />)
+        jest.spyOn(global, 'FileReader').mockImplementation(function () {
+            this.readyState = 2
+            this.result = "uploadedFile.png" // is reader.result
+            this.readAsDataURL = jest.fn()
+        })
+        
+        wrapper.find("input").simulate("change", {
+            target: {
+                files : ["File"] //IS e.target.files[0]
+            }
+        })
+        let reader = FileReader.mock.instances[0]
+        reader.onload()
+        wrapper.find('button').simulate('click')
+        
+        setImmediate(() => {
+            wrapper.update()
+
+            expect(wrapper.find('#information').text()).toContain("The image is fake and scored testPercentage% on the fakeometer")
+            done()
+        })
+
+    })
+
+    afterEach(() => {
+        sinon.restore()
+    })
     
 })
