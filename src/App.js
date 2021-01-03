@@ -12,7 +12,6 @@ function App() {
       <div className="container">
         <h1 className="heading">Is my photo fake?</h1>
         <ImageUploader />
-        {/* <SubmitButton /> */}
       </div>
       
     </div>
