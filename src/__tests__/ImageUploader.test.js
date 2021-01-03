@@ -30,8 +30,6 @@ describe('ImageUploader', () => {
             this.readAsDataURL = jest.fn()
         })
 
-        console.log(wrapper.debug())
-        
         wrapper.find("input").simulate("change", {
             target: {
                 files : ["File"] //IS e.target.files[0]
@@ -42,7 +40,6 @@ describe('ImageUploader', () => {
     
         setImmediate(() => {
             wrapper.update()
-            console.log(wrapper.debug())
 
             expect(wrapper.find('img').props()['src']).toBe('uploadedFile.png')
             expect(reader.readAsDataURL).toHaveBeenCalledWith("File")
