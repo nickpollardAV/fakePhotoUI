@@ -28,7 +28,7 @@ function ImageUploader() {
         if (image !== defaultImage) {
             try {
                 const response = await imageUtils.sendImageToServer(file) 
-                const resultText = `The image is ${response.isFake === true ? "fake": "real"} and scored ${response.percentageFake}% on the fakeometer`
+                const resultText = `The image is ${response.data.isFake === true ? "fake": "real"} and scored ${response.data.percentageFake}% on the fakeometer`
                 informationText = resultText
             } catch(e) {
                 informationText = "Failed to upload your image. This is our bad."
