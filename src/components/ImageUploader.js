@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import defaultImage from '../images/default-img.jpg'
+import defaultImage from '../images/default-img.JPG'
 import '../css/ImageUploader.css'
 import FileSelectorButton from './FileSelectorButton'
 import imageUtils from '../utils/imageUtils'
