@@ -4,7 +4,7 @@ The code in this repo is a front end for a user to input an image to then send t
 
 The rest API will use "Bedford's Law" to calculate if the image is legitimate, or has been tampered with.
 
-If the image has been altered, Bedford's law will be able to identify this using the images pixel values.
+If the image has been altered, Bedford's law will be able to identify this using the image's pixel values.
 
 Currently, the backend has not yet spawned into existence, so this is work in progress!
 
