@@ -1,11 +1,12 @@
 # fakePhotoUI
-These are just the files that have been edited after the creation of the react app.
 
-The whole project has not yet been uploaded because I cannot currently push from to GitHub from this laptop.
+The code in this repo is a front end for a user to input an image to then send to a rest API on AWS.
 
-The rest will be coming soon!
+The rest API will use "Bedford's Law" to calculate if the image is legitimate, or has been tampered with.
 
-Test update readme!
+If the image has been altered, Bedford's law will be able to identify this using the images pixel values.
+
+Currently, the backend has not yet spawned into existence, so this is work in progress!
 
 Special thanks to the following for their work on similar projects which was extremely helpful:
 -Rahul Ahire - https://www.youtube.com/watch?v=o2nmgbZaGMw
